@@ -24,10 +24,10 @@ def read_data(filename, include_labels=True):
     Tuple (Nxp Matrix, list)
     """
     features = np.genfromtxt(filename, delimiter=',')
+    features = np.delete(features, 0, axis=0)
     if not include_labels:
         return features, None
 
-    features = np.delete(features, 0, axis=0)
     labels = [row[0] for row in features]
     features = np.delete(features, 0, axis=1)
     return (features, labels)
@@ -215,12 +215,13 @@ def test_knn(k, train_data, train_labels, test_data):
     print("Final k:" + str(k))
     knn = KNN(k, train_data, train_labels)
 
-    with open('predictions.csv', 'wb') as file:
-        writer = csv.writer(file, delimiter=',')
+    with open('predictions.csv', 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow('ImageId,Label')
         for i in range(len(test_data)):
             data = test_data[i]
             guess = knn.classify(data)
-            writer.writerow(guess)
+            writer.writerow(str(i+1) + ',' + str(guess))
 
 
 if __name__ == '__main__':
@@ -248,6 +249,8 @@ if __name__ == '__main__':
     k, matrix = k_fold_cross_validation(train_data, train_labels)
     print_confusion_matrix(matrix)
 
+    print('Loading test data')
+    test_data, _ = read_data('test.csv', False)
+
     print('Testing classifier...')
-    test_data, _ = read_data('test.csv')
     test_knn(k, train_data, train_labels, test_data)
