@@ -215,13 +215,13 @@ def test_knn(k, train_data, train_labels, test_data):
     print("Final k:" + str(k))
     knn = KNN(k, train_data, train_labels)
 
-    with open('predictions.csv', 'w') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',')
-        writer.writerow('ImageId,Label')
+    with open('predictions_digit_recognizer.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['ImageId', 'Label'])
         for i in range(len(test_data)):
             data = test_data[i]
             guess = knn.classify(data)
-            writer.writerow(str(i+1) + ',' + str(guess))
+            writer.writerow([str(i+1), str(int(guess))])
 
 
 if __name__ == '__main__':
@@ -233,6 +233,8 @@ if __name__ == '__main__':
     print('Displaying Digits...')
     for digit in digits:
         display_digit(train_data, train_labels, digit)
+
+    print('Finding nearest neighbor for instance of each digit')
     for digit in digits:
         find_nearest_neighbor_random(train_data, train_labels, digit)
 
@@ -253,4 +255,4 @@ if __name__ == '__main__':
     test_data, _ = read_data('test.csv', False)
 
     print('Testing classifier...')
-    test_knn(k, train_data, train_labels, test_data)
+    test_knn(3, train_data, train_labels, test_data)
