@@ -1,5 +1,8 @@
 import csv
+import sys
+import math
 import numpy as np
+from sklearn import linear_model
 
 def read_data(filename, include_labels=True):
     """ read_data function
@@ -21,31 +24,60 @@ def read_data(filename, include_labels=True):
     ids = []
     labels = []
     with open(filename) as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
+        reader = csv.DictReader(csvfile)
         for row in reader:
-            ids.append(row['PassengerId'])
+            ids.append(int(row['PassengerId']))
             if include_labels:
-                labels.append(row['Survived'])
-            features.append([row['Pclass'], row['Sex'], row['Age'], row['SibSp'], row['Parch']])
+                labels.append(int(row['Survived']))
+            features.append(extract_features(row))
+    
+    return np.array(features), np.array(labels), np.array(ids)
 
-    return features, labels, ids
+def extract_features(row):
+    pclass = float(row['Pclass']) if row['Pclass'] != '' else 0
+    sex = 1 if row['Sex'] == 'male' else 0
+    age = float(row['Age']) if row['Age'] != '' else 0
+    sibsp = float(row['SibSp']) if row['SibSp'] != '' else 0
+    parch = float(row['Parch']) if row['Parch'] != '' else 0
+    return [pclass, sex, age, sibsp, parch]
 
-def clean_data(features):
-    # remove name, ticket, fare, embarked
-    features = np.delete(features, 'name', axis=1)
-    features = np.delete(features, 'ticket', axis=1)
-    features = np.delete(features, 'fare', axis=1)
-    features = np.delete(features, 'embarked', axis=1)
+def train_linear_regression(features, labels):
+    logreg = linear_model.LogisticRegression()
+    logreg.fit(features, labels)
+    return logreg
 
-    #remove top line
-    features = np.delete(features, 0, axis=0)
+def test_classifier(classifier, test_data, test_labels=None):
+    guesses = classifier.predict(test_data)
 
-    # map gender to 0, 1
-    # for i in len(features):
-    #     gender = features[1]
-    #     if 
+    if test_labels is not None:
+        right = 0.0
+        total = 0.0
+        for i in range(len(guesses)):
+            guess = guesses[i]
+            actual = test_labels[i]
+            if guess == actual:
+                right += 1.0
+            total += 1.0
+        print("Accuracy: " + str(right/total))
+    return guesses
 
-    return features
+def store_guesses(guesses, ids):
+    with open('predictions_titanic.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['PassengerId', 'Survived'])
+        for i in range(len(guesses)):
+            writer.writerow([str(ids[i]), str(int(guesses[i]))])
 
 if __name__ == '__main__':
-    features, labels, ids = read_data('./train.csv')
+    print("Loading training data...")
+    features, labels, ids = read_data('train.csv')
+
+    print("Training classifier...")
+    logreg = train_linear_regression(features, labels)
+
+    print("Loading test data...")
+    t_features, _, t_ids = read_data("test.csv", False)
+
+    print("Testing classifier...")
+    guesses = test_classifier(logreg, t_features)
+    store_guesses(guesses, t_ids)
