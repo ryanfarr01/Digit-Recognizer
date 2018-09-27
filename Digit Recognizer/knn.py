@@ -1,7 +1,18 @@
+"""
+Ryan Farr
+rlf238
+
+CS 5785 - Applied Machine Learning
+Homework 1
+"""
 import numpy as np
 from heapq import heappush, heappop
 
 class KNN:
+    """ class KNN
+
+    An implementation of K-Nearest Neighbors
+    """
     _k = 1
     _tdata = None
     _tlabels = None
@@ -12,6 +23,19 @@ class KNN:
         self._tlabels = training_labels
 
     def classify(self, test_point):
+        """ classify function
+
+        Classify a given test point.
+
+        Args
+        ----
+        test_point : np.array
+            data point to be tested
+
+        Returns
+        -------
+        Number
+        """
         # compare to each point in training set
         heap = []
         for i in range(len(self._tdata)):
